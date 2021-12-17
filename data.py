@@ -5,33 +5,24 @@ from torch.utils.data import Dataset
 
 
 class MultiViewToyExample(Dataset):
-
-    def __init__(self, views_name=('toy_view1', 'toy_view2'), data_dir='dataset/toy_example', train=True, train_rate=0.8):
-        self.Y = pickle.load(open(data_dir + '/toy_labels', 'rb'))
-        train_size = int(len(self.Y) * train_rate)
-        if train:
-            self.Y = np.array(self.Y[:train_size], dtype=np.long)
-        else:
-            self.Y = np.array(self.Y[train_size:], dtype=np.long)
-
-        self.X = dict()
-        for i in range(len(views_name)):
-            view = pickle.load(open(data_dir + '/' + views_name[i], 'rb'))
-            view = MinMaxScaler([0, 1]).fit_transform(view).astype(np.float32)
+    def __init__(self, path='dataset/toy_example/ToyExample_2views.pkl', train=None, train_rate=0.8):
+        self.x, self.y = pickle.load(open(path, 'rb'))
+        self.x = {k: MinMaxScaler().fit_transform(v).astype(np.float32) for k, v in self.x.items()}
+        if train is not None:
+            train_size = int(len(self.y) * train_rate)
             if train:
-                view = view[:train_size]
+                self.x = {k: v[:train_size] for k, v in self.x.items()}
+                self.y = np.array(self.y[:train_size], dtype=np.long)
             else:
-                view = view[train_size:]
-            self.X[i] = view
+                self.x = {k: v[train_size:] for k, v in self.x.items()}
+                self.y = np.array(self.y[train_size:], dtype=np.long)
 
     def __getitem__(self, index):
-        x = dict()
-        for v in self.X.keys():
-            x[v] = self.X[v][index]
-        return x, self.Y[index]
+        x = {k: v[index] for k, v in self.x.items()}
+        return x, self.y[index]
 
     def __len__(self):
-        return len(self.Y)
+        return len(self.y)
 
 
 class HandWrittenDataset(Dataset):
