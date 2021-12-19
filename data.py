@@ -3,6 +3,12 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset
 
+"""
+You can also download dataset "scene15-gist-hog-lbp.pkl" from "百度网盘":
+链接：https://pan.baidu.com/s/1oj8mK5EIencgImd4YmUDTg
+提取码：agy7
+"""
+
 
 class MultiViewDataset(Dataset):
     def __init__(self, data_path='dataset/handwritten_6views.pkl', train=True, train_rate=0.8, shuffle=False):
