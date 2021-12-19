@@ -2,10 +2,9 @@ import os
 import copy
 import torch
 import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 
-from data import *
+from data import MultiViewDataset
 from models import TMC
 
 
@@ -14,11 +13,11 @@ class Experiment:
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         # Load dataset
-        data_train = HandWrittenDataset(train=True)
-        data_valid = HandWrittenDataset(train=False)
-        num_classes = len(set(data_train.Y))
-        self.train_loader = torch.utils.data.DataLoader(data_train, batch_size=256, shuffle=True)
-        self.valid_loader = torch.utils.data.DataLoader(data_valid, batch_size=1024, shuffle=False)
+        data_train = MultiViewDataset(data_path='dataset/handwritten_6views.pkl', train=True)
+        data_valid = MultiViewDataset(data_path='dataset/handwritten_6views.pkl', train=False)
+        num_classes = len(set(data_train.y))
+        self.train_loader = DataLoader(data_train, batch_size=256, shuffle=True)
+        self.valid_loader = DataLoader(data_valid, batch_size=1024, shuffle=False)
 
         # Define model
         self.model = TMC(sample_shapes=[s.shape for s in data_train[0][0].values()], num_classes=num_classes)
