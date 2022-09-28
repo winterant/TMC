@@ -74,8 +74,6 @@ class Experiment:
                 x, y = batch['x'], batch['y']
                 for v in x.keys():
                     x[v] = x[v].to(self.device)
-                for v in x.keys():
-                    x[v] = x[v].to(self.device)
                 view_e, fusion_e, loss = model(x)
                 correct += torch.sum(fusion_e.cpu().argmax(dim=-1).eq(y)).item()
                 num_samples += len(y)
