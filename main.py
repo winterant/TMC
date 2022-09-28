@@ -13,14 +13,14 @@ class Experiment:
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         # Load dataset
-        data_train = MultiViewDataset(data_path='dataset/handwritten_6views.pkl', train=True)
-        data_valid = MultiViewDataset(data_path='dataset/handwritten_6views.pkl', train=False)
+        data_train = MultiViewDataset(data_path='dataset/handwritten_6views.mat', train=True)
+        data_valid = MultiViewDataset(data_path='dataset/handwritten_6views.mat', train=False)
         num_classes = len(set(data_train.y))
         self.train_loader = DataLoader(data_train, batch_size=256, shuffle=True)
         self.valid_loader = DataLoader(data_valid, batch_size=1024, shuffle=False)
 
         # Define model
-        self.model = TMC(sample_shapes=[s.shape for s in data_train[0][0].values()], num_classes=num_classes)
+        self.model = TMC(sample_shapes=[s.shape for s in data_train[0]['x'].values()], num_classes=num_classes)
         self.model = self.model.to(self.device)
 
         # Define optimizer
@@ -35,11 +35,12 @@ class Experiment:
         for epoch in range(self.epochs):
             model.train()
             train_loss, correct, num_samples = 0, 0, 0
-            for batch, target in self.train_loader:
-                for v in batch.keys():
-                    batch[v] = batch[v].to(self.device)
+            for batch in self.train_loader:
+                x, target = batch['x'], batch['y']
+                for v in x.keys():
+                    x[v] = x[v].to(self.device)
                 target = target.to(self.device)
-                view_e, fusion_e, loss = model(batch, target, epoch)
+                view_e, fusion_e, loss = model(x, target, epoch)
                 self.optimizer.zero_grad()
                 loss.mean().backward()
                 self.optimizer.step()
@@ -69,12 +70,15 @@ class Experiment:
         model.eval()
         with torch.no_grad():
             correct, num_samples = 0, 0
-            for batch, target in loader:
-                for v in batch.keys():
-                    batch[v] = batch[v].to(self.device)
-                view_e, fusion_e, loss = model(batch)
-                correct += torch.sum(fusion_e.cpu().argmax(dim=-1).eq(target)).item()
-                num_samples += len(target)
+            for batch in loader:
+                x, y = batch['x'], batch['y']
+                for v in x.keys():
+                    x[v] = x[v].to(self.device)
+                for v in x.keys():
+                    x[v] = x[v].to(self.device)
+                view_e, fusion_e, loss = model(x)
+                correct += torch.sum(fusion_e.cpu().argmax(dim=-1).eq(y)).item()
+                num_samples += len(y)
         acc = correct / num_samples
         return acc
 
